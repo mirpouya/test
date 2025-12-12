@@ -63,7 +63,7 @@ python associate.py PATH_TO_SEQUENCE/rgb.txt PATH_TO_SEQUENCE/depth.txt > associ
 
 cd ~/Desktop/SLAM-models/ORB_SLAM3
 
-python /path/to/associate.py \
+python associate.py \
   datasets/rgbd_dataset_freiburg3_walking_halfsphere/rgb.txt \
   datasets/rgbd_dataset_freiburg3_walking_halfsphere/depth.txt \
   > Examples/RGB-D/associations/fr3_walking_halfsphere.txt
@@ -77,5 +77,13 @@ python /path/to/associate.py \
   Examples/RGB-D/associations/fr3_walking_halfsphere.txt
 
 
-git status
+
+python evaluation/evaluate_ate_scale.py \
+  datasets/rgbd_dataset_freiburg3_walking_halfsphere/groundtruth.txt \
+  CameraTrajectory.txt \
+  --max_difference 0.02 \
+  --verbose \
+  --plot evaluation/fr3_walking_halfsphere_ate.pdf
+
+
 
