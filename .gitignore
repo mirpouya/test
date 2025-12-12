@@ -9,6 +9,10 @@
 
 datasets/
 
+# Unignore important no-extension files
+!Dockerfile
+!Makefile
+
 
 CMakeLists.txt.user
 CMakeLists_modified.txt
