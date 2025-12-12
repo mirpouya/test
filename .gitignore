@@ -7,6 +7,9 @@
 # Unignore all dirs
 !*/
 
+datasets/
+
+
 CMakeLists.txt.user
 CMakeLists_modified.txt
 
@@ -91,12 +94,3 @@ my_settings.txt
 borrar/*
 
 */ExecMean.txt
-
-# ===== Local experiments (Pouya) =====
-datasets/
-associate.py
-installation_guide.txt
-fr3_walking_halfsphere_ate.pdf
-*.pdf
-*.png
-Examples/RGB-D/associations/

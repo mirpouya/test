@@ -1,0 +1,81 @@
+Build the image:
+    make build
+
+
+Run the container:
+    make run
+
+
+Enter the container:
+    make enter
+
+
+Build ORB-SLAM3 inside container:
+    cd /workspace/ORB_SLAM3
+    chmod +x build.sh
+    ./build.sh
+
+
+Test RealSense access:
+    rs-enumerate-devices
+
+If this fails, the USB mount isn’t working.
+
+Prepare calibration file: e.g., RealSense_D435i.yaml
+
+Run SLAM:
+cd Examples/Monocular  # or Stereo-Inertial
+./mono_tum Vocabulary/ORBvoc.txt RealSense_D435i.yaml
+
+
+Execute this inside the container to start a real time demo (with Intel D435i plugged in)
+./Examples/Monocular/mono_realsense_D435i /Vocabulary/ORBvoc.txt ./Examples/Monocular/RealSense_D435i.yaml
+./Examples/Stereo-Inertial/stereo_inertial_realsense_D435i Vocabulary/ORBvoc.txt ./Examples/Stereo-Inertial/RealSense_D435i.yaml
+
+
+
+
+# testing just the monocular camera with TUM:
+
+    # Download some data:
+    mkdir -p /datasets/ && \
+    cd /datasets/ && \
+    wget https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.tgz && \
+    wget https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_rpy.tgz 
+
+
+
+    tar -xzf rgbd_dataset_freiburg1_xyz.tgz && \
+    tar -xzf rgbd_dataset_freiburg1_rpy.tgz
+
+    rm rgbd_dataset_freiburg1_xyz.tgz && \
+    rm rgbd_dataset_freiburg1_rpy.tgz
+
+    cd /workspace/ORB_SLAM3
+    ./Examples/Monocular/mono_tum Vocabulary/ORBvoc.txt Examples/Monocular/TUM1.yaml datasets/rgbd_dataset_freiburg1_xyz
+    
+    
+    ./Examples/Monocular/mono_realsense_D435i /ORB_SLAM3/Vocabulary/ORBvoc.txt /ORB_SLAM3/Examples/Monocular/RealSense_D435i.yaml
+
+
+
+python associate.py PATH_TO_SEQUENCE/rgb.txt PATH_TO_SEQUENCE/depth.txt > associations.txt
+
+cd ~/Desktop/SLAM-models/ORB_SLAM3
+
+python /path/to/associate.py \
+  datasets/rgbd_dataset_freiburg3_walking_halfsphere/rgb.txt \
+  datasets/rgbd_dataset_freiburg3_walking_halfsphere/depth.txt \
+  > Examples/RGB-D/associations/fr3_walking_halfsphere.txt
+
+
+
+./Examples/RGB-D/rgbd_tum \
+  Vocabulary/ORBvoc.txt \
+  Examples/RGB-D/TUM3.yaml \
+  datasets/rgbd_dataset_freiburg3_walking_halfsphere \
+  Examples/RGB-D/associations/fr3_walking_halfsphere.txt
+
+
+git status
+
