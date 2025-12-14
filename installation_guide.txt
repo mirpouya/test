@@ -77,13 +77,25 @@ python associate.py \
   Examples/RGB-D/associations/fr3_walking_halfsphere.txt
 
 
+apt install python-numpy
+apt install python-matplotlib
+
+
 
 python evaluation/evaluate_ate_scale.py \
   datasets/rgbd_dataset_freiburg3_walking_halfsphere/groundtruth.txt \
   CameraTrajectory.txt \
   --max_difference 0.02 \
   --verbose \
-  --plot evaluation/fr3_walking_halfsphere_ate.pdf
+  --plot evaluation/fr3_walk_half_dyn_mask_ate.pdf
 
 
 
+with dynamic masks:
+
+./Examples/RGB-D/rgbd_tum \
+  Vocabulary/ORBvoc.txt \
+  Examples/RGB-D/TUM3.yaml \
+  datasets/rgbd_dataset_freiburg3_walking_halfsphere \
+  Examples/RGB-D/associations/fr3_walking_halfsphere.txt \
+  datasets/rgbd_dataset_freiburg3_walking_halfsphere/masks_yolo11

@@ -1093,12 +1093,56 @@ namespace ORB_SLAM3
         Mat image = _image.getMat();
         assert(image.type() == CV_8UC1 );
 
+        // Prepare an inverse binary mask (1 on static areas, 0 on dynamic) to filter keypoints.
+        Mat mask = _mask.getMat();
+        if(!mask.empty())
+        {
+            if(mask.channels() == 3)
+                cvtColor(mask, mask, COLOR_BGR2GRAY);
+            else if(mask.channels() == 4)
+                cvtColor(mask, mask, COLOR_BGRA2GRAY);
+
+            if(mask.type() != CV_8UC1)
+                mask.convertTo(mask, CV_8UC1);
+
+            // Provided masks mark dynamic regions in white; invert so static regions are valid (255).
+            threshold(mask, mask, 250, 255, THRESH_BINARY_INV);
+        }
+
         // Pre-compute the scale pyramid
         ComputePyramid(image);
+
+        vector<cv::Mat> vMaskPyramid;
+        if(!mask.empty())
+        {
+            vMaskPyramid.resize(nlevels);
+            for (int level = 0; level < nlevels; ++level)
+            {
+                float scale = mvInvScaleFactor[level];
+                Size sz(cvRound((float)image.cols*scale), cvRound((float)image.rows*scale));
+                cv::resize(mask, vMaskPyramid[level], sz, 0, 0, cv::INTER_NEAREST);
+            }
+        }
 
         vector < vector<KeyPoint> > allKeypoints;
         ComputeKeyPointsOctTree(allKeypoints);
         //ComputeKeyPointsOld(allKeypoints);
+
+        if(!mask.empty())
+        {
+            for (int level = 0; level < nlevels; ++level)
+            {
+                cv::Mat& levelMask = vMaskPyramid[level];
+                vector<KeyPoint>& keypoints = allKeypoints[level];
+
+                keypoints.erase(remove_if(keypoints.begin(), keypoints.end(),
+                                          [&levelMask](const KeyPoint& kp){
+                                              const int x = cvRound(kp.pt.x);
+                                              const int y = cvRound(kp.pt.y);
+                                              return x < 0 || x >= levelMask.cols || y < 0 || y >= levelMask.rows || levelMask.at<uchar>(y,x) == 0;
+                                          }), keypoints.end());
+            }
+        }
 
         Mat descriptors;
 

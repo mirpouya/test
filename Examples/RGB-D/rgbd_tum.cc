@@ -32,9 +32,9 @@ void LoadImages(const string &strAssociationFilename, vector<string> &vstrImageF
 
 int main(int argc, char **argv)
 {
-    if(argc != 5)
+    if(argc != 5 && argc != 6)
     {
-        cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association" << endl;
+        cerr << endl << "Usage: ./rgbd_tum path_to_vocabulary path_to_settings path_to_sequence path_to_association [path_to_masks]" << endl;
         return 1;
     }
 
@@ -44,6 +44,10 @@ int main(int argc, char **argv)
     vector<double> vTimestamps;
     string strAssociationFilename = string(argv[4]);
     LoadImages(strAssociationFilename, vstrImageFilenamesRGB, vstrImageFilenamesD, vTimestamps);
+
+    string maskFolder;
+    if(argc == 6)
+        maskFolder = string(argv[5]);
 
     // Check consistency in the number of images and depthmaps
     int nImages = vstrImageFilenamesRGB.size();
@@ -71,12 +75,35 @@ int main(int argc, char **argv)
     cout << "Images in the sequence: " << nImages << endl << endl;
 
     // Main loop
-    cv::Mat imRGB, imD;
+    cv::Mat imRGB, imD, imMask;
     for(int ni=0; ni<nImages; ni++)
     {
         // Read image and depthmap from file
         imRGB = cv::imread(string(argv[3])+"/"+vstrImageFilenamesRGB[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
         imD = cv::imread(string(argv[3])+"/"+vstrImageFilenamesD[ni],cv::IMREAD_UNCHANGED); //,cv::IMREAD_UNCHANGED);
+        imMask.release();
+        if(!maskFolder.empty())
+        {
+            string maskName = vstrImageFilenamesRGB[ni];
+            size_t pos = maskName.find_last_of("/");
+            if(pos != string::npos)
+                maskName = maskName.substr(pos+1);
+
+            const string maskPathSame = maskFolder + "/" + maskName;
+
+            // Also try "<name>_mask.ext" pattern if direct name not found.
+            string maskPathWithSuffix = maskPathSame;
+            size_t dot = maskName.find_last_of('.');
+            if(dot != string::npos)
+                maskPathWithSuffix = maskFolder + "/" + maskName.substr(0, dot) + "_mask" + maskName.substr(dot);
+
+            imMask = cv::imread(maskPathSame, cv::IMREAD_GRAYSCALE);
+            if(imMask.empty())
+                imMask = cv::imread(maskPathWithSuffix, cv::IMREAD_GRAYSCALE);
+
+            if(imMask.empty())
+                cerr << "Warning: failed to load mask at: " << maskPathSame << " or " << maskPathWithSuffix << endl;
+        }
         double tframe = vTimestamps[ni];
 
         if(imRGB.empty())
@@ -92,6 +119,8 @@ int main(int argc, char **argv)
             int height = imRGB.rows * imageScale;
             cv::resize(imRGB, imRGB, cv::Size(width, height));
             cv::resize(imD, imD, cv::Size(width, height));
+            if(!imMask.empty())
+                cv::resize(imMask, imMask, cv::Size(width, height), 0, 0, cv::INTER_NEAREST);
         }
 
 #ifdef COMPILEDWITHC11
@@ -101,7 +130,7 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the image to the SLAM system
-        SLAM.TrackRGBD(imRGB,imD,tframe);
+        SLAM.TrackRGBD(imRGB,imD,tframe, std::vector<ORB_SLAM3::IMU::Point>(), "", imMask);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
